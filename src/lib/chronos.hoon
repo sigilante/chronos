@@ -10,7 +10,7 @@
   ;:  sum
     (fra (pro --1.461 :(sum y --4.800 (fra (sum m -14) --12))) --4)
     (fra (pro --367 :(sum m -2 (pro -12 (fra (sum m -14) --12)))) --12)
-    (fra (pro -3 (fra :(sum y --4.900 (fra (sum m -14) --12)) --100)) --4)
+    (fra (pro -3 (fra (crip :(sum y --4.900 (fra (sum m -14) --12)) --100)) --4)
     d
     -32.075
   ==
@@ -72,6 +72,7 @@
 ::
 ::  `@da` is more general than ISO 8601, so there are definitely edge cases.
 ::  I suggest not using ISO 8601 for dates in the Dune universe or Hyborian Age.
+::  We also do not handle Z+5 time zone markers here, saving that for %l10n.
 ::
 ::  We will simply handle cases in order:  if it is not a year alone, then it
 ::  is a year and a month or week, etc.  Ambiguity is not possible in the
@@ -79,11 +80,84 @@
 ::
 ++  iso-re  '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
 ++  iso-re-date  '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))?)?$'
-++  iso-re-time  '^((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?$'
+++  iso-re-time  ^((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?$
+(\.[0-9]+)?
 ::
 ++  iso-valid
   |=  dat=cord
   (valid:re dat iso-re)
+::
+::  Parse date
+::
+++  iso-date
+  |=  dat=tape  ^-  @da
+  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))$' dat)
+    :: 1. YYYY or 2. ±YYYY
+    :: In this case, all we have is a year identifier, so the easiest thing to
+    :: do is just interpolate it into text and send it to `@da`.  Probably not
+    :: the fastest, but def. the easiest.
+    `@da`(slav %da (crip :(weld "~" dat ".1.1"))
+  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))(-)(0[1-9]|1[0-2])$' dat)
+    :: 4. YYYY-MM
+    =/  yyyy  (scag 4 dat)
+    =/  mm    (slag 2 dat)
+    `@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
+  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))(-?)(0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])$' dat)
+    :: 6. YYYY-Www or 7. YYYYWww
+    :: ISO week dates start from the week containing January 4, so they're a bit
+    :: wonky to calculate.
+    =/  yyyy  (scag 4 dat)
+    =/  ww    (slag 2 dat)
+    =/  dd    ()
+    `@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
+  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|3([0-5]\d|6[1-6])))$' dat)
+    :: 3. YYYY-MM-DD or 5. YYYYMMDD
+    =/  yyyy  (scag 4 dat)
+    =/  mm    (slag 2 (scag ?:(=((lent dat) 8) 6 7) dat))
+    =/  dd    (slag 2 dat)
+    `@da`(slav %da (crip :(weld "~" yyyy "." mm "." dd)))
+  ?~  
+    :: 8. YYYY-Www-D or 9. YYYYWwwD
+    :: ISO week dates start from the week containing January 4, so they're a bit
+    :: wonky to calculate.
+    =/  yyyy  (scag 4 dat)
+    =/  ww    (slag 2 dat)
+    =/  dd    ()
+    `@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
+  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))((-?)((\3([12]\d|0[1-9]|3[01]))?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))?)?$' dat)
+    :: 10. YYYY-DDD or 11. YYYYDDD
+    :: For this one, we use the funny property of `@da` that it just corrects
+    :: month overflows.
+    =/  yyyy  (scag 4 dat)
+    =/  dd    (slag 3 dat)
+    `@da`(slav %da (crip :(weld "~" yyyy ".1." dd))))
+::
+::  Parse time
+::
+++  iso-time
+  |=  tim=tape  ^-  @dr
+  ?~  tim  `@dr`0
+  ?~  (is:re '^(([01]\d|2[0-3])((:?)[0-5]\d)?)$' tim)
+    ::  18. hh
+    `@da`(slav %dr (crip :(weld "~h" ?(=('0' i.tim) t.tim tim)))
+  ?~  (is:re '^((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?$' tim)
+    :: 16. hh:mm or 17. hhmm
+    =/  hh  (scag 2 tim)
+    =/  mm  (slag 2 tim)
+    `@da`(slav %dr (crip :(weld "~h" h ".m" mm)))
+  ?~  (is:re '' tim)
+    :: 14. hh:mm:ss or 15. hhmmss
+    =/  hh  (scag 2 tim)
+    =/  mm  (slag 2 (scag ?:(=((lent dat) 6) 4 5) dat))
+    =/  ss  (slag 2 tim)
+    `@da`(slav %dr (crip :(weld "~h" h ".m" mm ".s" ss)))
+   ?~  (is:re '' tim)
+    :: 12. hh:mm:ss.sss or 13. hhmmss.sss
+    =/  hh  (scag 2 tim)
+    =/  mm  (slag 2 (scag ?:(=((lent dat) 6) 4 5) dat))
+    =/  ss  (slag 2 tim)
+    `@da`(slav %dr (crip :(weld "~h" h ".m" mm ".s" ss)))
+
 ::
 ++  iso2da
   |=  =cord  ^-  @da
@@ -97,49 +171,7 @@
       ?~  (is:re iso-re-time tape)  [~ tape]
       !!
     [(scag (need (find "T" tap)) tape) (slag (need (find "T") tap) tape)]
-  ::
-  ::  Parse dat
-  ::
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))$' dat)
-    :: 1. YYYY or 2. ±YYYY
-    :: In this case, all we have is a year identifier, so the easiest thing to
-    :: do is just interpolate it into text and send it to `@da`.  Probably not
-    :: the fastest, but def. the easiest.
-    `@da`(slav %da :(weld "~" dat ".1.1"))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))(-)(0[1-9]|1[0-2])$' dat)
-    :: 4. YYYY-MM
-    =/  yyyy  (scag 4 dat)
-    =/  mm    (slag 2 dat)
-    `@da`(slav %da :(weld "~" yyyy "." mm ".1"))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))(-?)(0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])$' dat)
-    :: 6. YYYY-Www or 7. YYYYWww
-    :: ISO week dates start from the week containing January 4, so they're a bit
-    :: wonky to calculate.
-    =/  yyyy  (scag 4 dat)
-    =/  ww    (slag 2 dat)
-    =/  dd    ()
-    `@da`(slav %da :(weld "~" yyyy "." mm ".1"))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|3([0-5]\d|6[1-6])))$' dat)
-    :: 3. YYYY-MM-DD or 5. YYYYMMDD
-    =/  yyyy  (scag 4 dat)
-    =/  mm    (slag 2 (scag ?:(=((lent dat) 8) 6 7) dat))
-    =/  dd    (slag 2 dat)
-    `@da`(slav %da :(weld "~" yyyy "." mm "." dd))
-  ?~  
-    :: 8. YYYY-Www-D or 9. YYYYWwwD
-    :: ISO week dates start from the week containing January 4, so they're a bit
-    :: wonky to calculate.
-    =/  yyyy  (scag 4 dat)
-    =/  ww    (slag 2 dat)
-    =/  dd    ()
-    `@da`(slav %da :(weld "~" yyyy "." mm ".1"))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))((-?)((\3([12]\d|0[1-9]|3[01]))?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))?)?$' dat)
-    :: 10. YYYY-DDD or 11. YYYYDDD
-    :: For this one, we use the funny property of `@da` that it just corrects
-    :: month overflows.
-    =/  yyyy  (scag 4 dat)
-    =/  dd    (slag 3 dat)
-    `@da`(slav %da :(weld "~" yyyy ".1." dd))
+  (add (iso-date dat) (iso-time tim))
 ::
 ++  da2iso  !!
 ++  ju2iso  !!
