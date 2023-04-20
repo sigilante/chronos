@@ -1,6 +1,6 @@
 #   `%chronos`:  An Urbit Library for Calendrics
 
-**wip ~2023.4.20 - now handles ISO 8601 mostly correctly**
+**wip ~2023.4.20**
 
 We need a library for all manner of date/time representations and conversions, including time zone and date line shenanigans.
 
