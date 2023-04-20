@@ -5,9 +5,9 @@
     chronos,
     regex
 |%
-++  test-regex
-  ;:  weld
-  (valid:regex '/^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/')
+::++  test-regex
+::  ;:  weld
+::  (valid:regex (crip "/^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/"))
 ++  test-iso-8601
   ;:  weld
   %+  expect-eq
@@ -118,53 +118,53 @@
   %+  expect-eq
     !>  ~2010.2.18..10.23.48..3bbc
     !>  (iso2da:chronos '2010-02-18T16.23334444')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '200905')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009367')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '200905')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2007-04-05T24:50')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-000')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-M511')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009M511')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19T14a39r')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19T14:3924')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-0519')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-1914:39')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19 14:')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19r14:39')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19 14a39a22')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '200912-01')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19 14:39:22+06a00')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19 146922.500')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2010-02-18T16.5:23.35:48')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2010-02-18T16:23.35:48')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2010-02-18T16:23.35:48.45')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2009-05-19 14.5.44')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2010-02-18T16:23.33.600')
-  %+  expect-fail
+  %-  expect-fail
     |.  (iso2da:chronos '2010-02-18T16,25:23:48,444')
   ==
 --

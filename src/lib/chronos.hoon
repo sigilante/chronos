@@ -10,7 +10,7 @@
   ;:  sum
     (fra (pro --1.461 :(sum y --4.800 (fra (sum m -14) --12))) --4)
     (fra (pro --367 :(sum m -2 (pro -12 (fra (sum m -14) --12)))) --12)
-    (fra (pro -3 (fra (crip :(sum y --4.900 (fra (sum m -14) --12)) --100)) --4)
+    (fra (pro -3 (fra (crip :(sum y --4.900 (fra (sum m -14) --12)) --100))) --4)
     d
     -32.075
   ==

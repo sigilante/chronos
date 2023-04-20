@@ -1,5 +1,7 @@
 #   `%chronos`:  An Urbit Library for Calendrics
 
+**wip ~2023.4.20 - now handles ISO 8601 mostly correctly**
+
 We need a library for all manner of date/time representations and conversions, including time zone and date line shenanigans.
 
 This library should handle:
@@ -28,6 +30,12 @@ https://en.wikipedia.org/wiki/Calendar
 
 ##  Resources
 
+Regular Expressions:
+
 - Evelyn Kokemoor `lynko` `/lib/regex.hoon`
-- [“ISO 8601 Date Validation That Doesn't Suck”, Intervals Blog](https://www.myintervals.com/blog/2009/05/20/iso-8601-date-validation-that-doesnt-suck/)
 - [Regex 101 Tool](https://regex101.com/)
+
+ISO 8601:
+
+- [“ISO 8601 Date Validation That Doesn't Suck”, Intervals Blog](https://www.myintervals.com/blog/2009/05/20/iso-8601-date-validation-that-doesnt-suck/)
+- [DenCode ISO 8601 Date Converter Online](https://dencode.com/en/date/iso8601)
