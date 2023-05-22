@@ -1,4 +1,5 @@
 /+  re=regex
+!:
 |%
 ++  da2ju
   |=  =@da  ^-  @sd
@@ -10,7 +11,7 @@
   ;:  sum
     (fra (pro --1.461 :(sum y --4.800 (fra (sum m -14) --12))) --4)
     (fra (pro --367 :(sum m -2 (pro -12 (fra (sum m -14) --12)))) --12)
-    (fra (pro -3 (fra (crip :(sum y --4.900 (fra (sum m -14) --12)) --100))) --4)
+    (fra (pro -3 (fra :(sum y --4.900 (fra (sum m -14) --12)) --100)) --4)
     d
     -32.075
   ==
@@ -78,100 +79,120 @@
 ::  is a year and a month or week, etc.  Ambiguity is not possible in the
 ::  current standard, so we simply disallow v2000-style YYMMDD and so forth.
 ::
-++  iso-re  '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
-++  iso-re-date  '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))?)?$'
-++  iso-re-time  ^((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?$
-(\.[0-9]+)?
+++  iso-re  '^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$'
+++  iso-re-date  '^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$'
+++  iso-re-time  '^((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?$'
 ::
 ++  iso-valid
   |=  dat=cord
-  (valid:re dat iso-re)
+  ?~((is:re (trip dat) (trip iso-re)) %.y %.n)
 ::
 ::  Parse date
 ::
 ++  iso-date
   |=  dat=tape  ^-  @da
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))$' dat)
+  ?~  dat  *@da
+  ?~  (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))$') dat)
     :: 1. YYYY or 2. ±YYYY
     :: In this case, all we have is a year identifier, so the easiest thing to
     :: do is just interpolate it into text and send it to `@da`.  Probably not
     :: the fastest, but def. the easiest.
-    `@da`(slav %da (crip :(weld "~" dat ".1.1"))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))(-)(0[1-9]|1[0-2])$' dat)
+    `@da`(slav %da (crip :(weld "~" dat ".1.1")))
+  ?~  (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))(-)(0[1-9]|1[0-2])$') dat)
     :: 4. YYYY-MM
-    =/  yyyy  (scag 4 dat)
-    =/  mm    (slag 2 dat)
+    =/  len   (lent dat)
+    =/  yyyy  (scag 4 `tape`dat)
+    =/  mm    (slag (sub len ?:(=("0" i.dat) 1 2)) `tape`dat)
     `@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))(-?)(0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])$' dat)
+  ?~  (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))(-?)(0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])$') dat)
     :: 6. YYYY-Www or 7. YYYYWww
     :: ISO week dates start from the week containing January 4, so they're a bit
     :: wonky to calculate.
-    =/  yyyy  (scag 4 dat)
-    =/  ww    (slag 2 dat)
-    =/  dd    ()
-    `@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|3([0-5]\d|6[1-6])))$' dat)
+    =/  len   (lent dat)
+    =/  yyyy  (scag 4 `tape`dat)
+    =/  ww    (slag (sub len ?:(=("0" i.dat) 1 2)) `tape`dat)
+    =/  dd    5  :: TODO
+    !!
+    ::`@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
+  ~&  >  [`tape`dat (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|3([0-5]\\d|6[1-6])))$') dat)]
+  ?~  (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|3([0-5]\\d|6[1-6])))$') dat)
     :: 3. YYYY-MM-DD or 5. YYYYMMDD
-    =/  yyyy  (scag 4 dat)
-    =/  mm    (slag 2 (scag ?:(=((lent dat) 8) 6 7) dat))
-    =/  dd    (slag 2 dat)
+    =/  len   (lent dat)
+    =/  yyyy  (scag 4 `tape`dat)
+    =/  mt    (scag ?:(=((lent dat) 8) 6 7) `tape`dat)
+    =/  m0y   =('0' (snag (sub (lent mt) 2) mt))
+    =/  mm    ?~(mt "0" (slag (sub (lent mt) ?:(m0y 1 2)) `tape`mt))
+    =/  dd    (slag (sub len ?:(=("0" i.dat) 1 2)) `tape`dat)
     `@da`(slav %da (crip :(weld "~" yyyy "." mm "." dd)))
-  ?~  
+  ?~  (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|3([0-5]\\d|6[1-6])))$') dat)
     :: 8. YYYY-Www-D or 9. YYYYWwwD
     :: ISO week dates start from the week containing January 4, so they're a bit
     :: wonky to calculate.
-    =/  yyyy  (scag 4 dat)
-    =/  ww    (slag 2 dat)
-    =/  dd    ()
-    `@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
-  ?~  (is:re '^([\+-]?\d{4}(?!\d{2}\b))((-?)((\3([12]\d|0[1-9]|3[01]))?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))?)?$' dat)
+    =/  len   (lent dat)
+    =/  yyyy  (scag 4 `tape`dat)
+    =/  ww    (slag (sub len ?:(=("0" i.dat) 1 2)) `tape`dat)
+    =/  dd    5  ::TODO
+    !!
+    ::`@da`(slav %da (crip :(weld "~" yyyy "." mm ".1")))
+  ?~  (is:re (trip '^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((\\3([12]\\d|0[1-9]|3[01]))?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$') dat)
     :: 10. YYYY-DDD or 11. YYYYDDD
     :: For this one, we use the funny property of `@da` that it just corrects
     :: month overflows.
-    =/  yyyy  (scag 4 dat)
-    =/  dd    (slag 3 dat)
-    `@da`(slav %da (crip :(weld "~" yyyy ".1." dd))))
+    =/  len   (lent dat)
+    =/  yyyy  (scag 4 `tape`dat)
+    =/  dd    (scow %ud (scan (slag 3 `tape`dat) dum:ag))
+    `@da`(slav %da (crip :(weld "~" yyyy ".1." dd)))
+  ~&  >  date+dat
+  !!
 ::
 ::  Parse time
 ::
 ++  iso-time
   |=  tim=tape  ^-  @dr
   ?~  tim  `@dr`0
-  ?~  (is:re '^(([01]\d|2[0-3])((:?)[0-5]\d)?)$' tim)
+  ?~  (is:re (trip '^([01]\\d|2[0-4])$') tim)
     ::  18. hh
-    `@da`(slav %dr (crip :(weld "~h" ?(=('0' i.tim) t.tim tim)))
-  ?~  (is:re '^((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?$' tim)
+    (slav %dr (crip :(weld "~h" ?:(=("0" i.tim) t.tim tim))))
+  ?~  (is:re (trip '^(([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)$') tim)
     :: 16. hh:mm or 17. hhmm
-    =/  hh  (scag 2 tim)
-    =/  mm  (slag 2 tim)
-    `@da`(slav %dr (crip :(weld "~h" h ".m" mm)))
-  ?~  (is:re '' tim)
+    =/  len   (lent tim)
+    =/  hh  (scag 2 `tape`tim)
+    =/  mm  (slag (sub len 2) `tape`tim)
+    (slav %dr (crip :(weld "~h" hh ".m" mm)))
+  ?~  (is:re (trip '^(([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)((:?)[0-5]\\d)$') tim)
     :: 14. hh:mm:ss or 15. hhmmss
-    =/  hh  (scag 2 tim)
-    =/  mm  (slag 2 (scag ?:(=((lent dat) 6) 4 5) dat))
-    =/  ss  (slag 2 tim)
-    `@da`(slav %dr (crip :(weld "~h" h ".m" mm ".s" ss)))
-   ?~  (is:re '' tim)
+    =/  len   (lent tim)
+    =/  hh  (scag 2 `tape`tim)
+    =/  mm  (slag 2 (scag ?:(=((lent tim) 6) 4 5) `tape`tim))
+    =/  ss  (slag (sub len 2) `tape`tim)
+    (slav %dr (crip :(weld "~h" hh ".m" mm ".s" ss)))
+  ?~  (is:re (trip '^((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)((:?)[0-5]\\d)([\\.,]\\d+(?!:))?)?$') tim)
     :: 12. hh:mm:ss.sss or 13. hhmmss.sss
-    =/  hh  (scag 2 tim)
-    =/  mm  (slag 2 (scag ?:(=((lent dat) 6) 4 5) dat))
-    =/  ss  (slag 2 tim)
-    `@da`(slav %dr (crip :(weld "~h" h ".m" mm ".s" ss)))
-
+    =/  hh  (scag 2 `tape`tim)
+    =/  mm  (slag 2 (scag ?:(=((lent tim) 6) 4 5) `tape`tim))
+    =/  ss  (slag 2 `tape`tim)
+    (slav %dr (crip :(weld "~h" hh ".m" mm ".s" ss)))
+  ~&  >  time+tim
+  !!
 ::
 ++  iso2da
-  |=  =cord  ^-  @da
-  =/  =tape  (trip cord)
+  |=  =tape  ::^-  @da
   ::  There are three cases:  date w/o time, date w/ time, and time alone.
   ::  We will split the string up if both are present.
-  =/  [dat tim]=[tape tape]
-    ?~  (find "T" tap)
-      ::  No timestamp is present so either this is date w/o time or time alone.
-      ?~  (is:re iso-re-date tape)  [tape ~]
-      ?~  (is:re iso-re-time tape)  [~ tape]
-      !!
-    [(scag (need (find "T" tap)) tape) (slag (need (find "T") tap) tape)]
+  |^
+  =+  [dat tim]=(split-iso tape)
+  ~&  >>  iso+[dat tim]
   (add (iso-date dat) (iso-time tim))
+  ++  split-iso
+    |=  =^tape
+    =/  idx  (find "T" tape)
+    ?~  idx
+      ::  No timestamp is present so either this is date w/o time or time alone.
+      ?~  (is:re (trip iso-re-date) tape)  [tape ~]
+      ?~  (is:re (trip iso-re-time) tape)  [~ tape]
+      [tape ~]  :: the date can fall through
+    [(scag (need (find "T" tape)) tape) (slag +((need (find "T" tape))) tape)]
+  --
 ::
 ++  da2iso  !!
 ++  ju2iso  !!
